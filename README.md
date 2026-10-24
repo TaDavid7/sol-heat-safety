@@ -25,6 +25,7 @@ GPS (sim) + heat index ─► rules engine ─► Sol (Claude) ◄─► Twilio 
 - **Dead air is hidden:** while Claude thinks, Sol says "Ajá…" or "Okay…".
 
 Full spec: [.plans/sol-heat-safety-spec.md](.plans/sol-heat-safety-spec.md)
+Demo cheat sheet (every command, with real responses): [docs/Sol-Demo-Cheat-Sheet.pdf](docs/Sol-Demo-Cheat-Sheet.pdf). Regenerate it with `pip install reportlab` and `python docs/make-cheatsheet.py`.
 
 ## Run it without Twilio (terminal simulator)
 
