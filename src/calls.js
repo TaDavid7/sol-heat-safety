@@ -3,7 +3,7 @@ import { config } from "./config.js";
 import { bus, log } from "./events.js";
 import * as sol from "./sol.js";
 import * as twilio from "./twilio.js";
-import { escalate } from "./escalate.js";
+import { escalate, CLOSE } from "./escalate.js";
 import { workers, farm, now, minutesSince } from "./world.js";
 import { temperature } from "./weather.js";
 
@@ -22,6 +22,13 @@ export const filler = (call) => FILLERS[call.lang][Math.floor(Math.random() * 3)
 const FAILSAFE = {
   es: "Perdón, tengo problemas con la línea. Por favor descanse en la sombra y tome agua. Su supervisor va a venir a verle.",
   en: "Sorry, I'm having trouble with the line. Please rest in the shade and drink water. Your supervisor will come check on you.",
+};
+
+const META = /\b(I flagged|flagged this|report_status|this is what (Sol|I) (say|will say)|before the call ends|the worker)\b/i;
+const CLOSING = {
+  ok: { en: "Keep drinking water. I'll check on you again soon. Goodbye.", es: "Siga tomando agua. Le llamo pronto otra vez. Adiós." },
+  warning: { en: "Please rest in the shade and drink water. Your supervisor is coming to check on you.", es: "Por favor descanse en la sombra y tome agua. Su supervisor va a venir a verle." },
+  emergency: { en: "Help is coming right now. Please don't stay alone, and get to the shade if you can.", es: "La ayuda viene ahora mismo. Por favor no esté a solas, y vaya a la sombra si puede." },
 };
 
 export const callsLastHour = () => {
@@ -163,8 +170,13 @@ async function converse(call, userContent) {
   if (call.status === "ended") return { say: "", ended: true }; // fail-safe already took over
 
   let say = spoken.join(" ");
+  // last line of defense: never read operator-style narration to a worker
+  if (META.test(say)) {
+    log("sol_meta_blocked", { callId: call.id, text: say });
+    say = "";
+  }
   call.lang = sol.detectLang(say, call.lang);
-  if (!say) say = call.report ? (call.lang === "es" ? "Cuídese. Adiós." : "Take care. Goodbye.") : (call.lang === "es" ? "¿Me escucha?" : "Can you hear me?");
+  if (!say) say = call.report ? CLOSING[call.report.level][call.lang] : call.lang === "es" ? "¿Me escucha?" : "Can you hear me?";
   call.transcript.push({ who: "sol", text: say });
   log("sol_said", { callId: call.id, text: say });
   return { say, ended: !!call.report };
@@ -189,7 +201,7 @@ export function applyReport(call, input, source) {
   if (call.silences >= 2) { level = "emergency"; floors.push("2+ silences"); }
   if (call.reason === "break_overdue" && input?.took_break === "no" && level === "ok") { level = "warning"; floors.push("skipped overdue break"); }
 
-  if (call.report && RANK[call.report.level] >= RANK[level]) return "Already recorded. Say one short closing line.";
+  if (call.report && RANK[call.report.level] >= RANK[level]) return `Already recorded. ${CLOSE}`;
   call.report = { level, proposed, floors, symptoms: input?.symptoms || "none", took_break: input?.took_break || "no", source };
   w.lastReport = { ...call.report, at: now() };
   log("report", { callId: call.id, worker: w.name, ...call.report });

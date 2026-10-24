@@ -27,6 +27,19 @@ GPS (sim) + heat index ─► rules engine ─► Sol (Claude) ◄─► Twilio 
 Full spec: [.plans/sol-heat-safety-spec.md](.plans/sol-heat-safety-spec.md)
 Demo cheat sheet (every command, with real responses): [docs/Sol-Demo-Cheat-Sheet.pdf](docs/Sol-Demo-Cheat-Sheet.pdf). Regenerate it with `pip install reportlab` and `python docs/make-cheatsheet.py`.
 
+## Pre-recorded demo (no phones, just press play)
+
+`demo/audio/` holds ready-to-play phone calls. Sol's words, the alert levels and the supervisor messages are real output from the live system; only the worker's lines are scripted. What's said in each file is in `demo/audio/transcript.md`.
+
+| File | What the audience hears |
+|---|---|
+| `1-warning-call.wav` | Sol calls Tom about an overdue break. He has a headache, Sol sends him to the shade (WARNING), and the supervisor is texted. |
+| `2-emergency-call.wav` | José stopped moving. His answer is confused, Sol tells him help is coming (EMERGENCY), and the supervisor is texted. |
+| `3-supervisor-call.wav` | Sol phones the supervisor about José. The supervisor presses 1, and Sol logs that help is on the way. |
+| `sol-demo-full.wav` | All three back to back (about 3.5 min). |
+
+Regenerate with `npm run demo:audio`. It needs Windows (for the built-in voices) and `ANTHROPIC_API_KEY`, and costs about $0.07 per run.
+
 ## Run it without Twilio (terminal simulator)
 
 ```bash

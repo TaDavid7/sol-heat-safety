@@ -11,6 +11,8 @@ let nextId = 1;
 const RANK = { ok: 0, warning: 1, emergency: 2 };
 const es = config.supervisorLanguage === "es";
 const firstName = (w) => w.name.split(" ")[0];
+// Tool results end with this so Sol's next words go to the worker, not to us.
+export const CLOSE = "Now say one short closing line straight to the worker, in their language. It is spoken aloud on the call: talk to them as \"you\", and never explain your decision or mention the report.";
 const replyName = (w) => firstName(w).normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase();
 const where = (w) => (w.stub ? `unregistered caller ${w.phone || ""}`.trim() : describeLocation(w));
 const Where = (w) => where(w).replace(/^./, (c) => c.toUpperCase()); // sentence start
@@ -61,11 +63,11 @@ export function escalate(w, report) {
   const open = alerts.find((a) => a.worker === w && (a.state === "open" || a.state === "acknowledged" || a.state === "stuck"));
   // a calmer call never hides an alert a human hasn't closed yet
   w.status = open && RANK[open.level] > RANK[report.level] ? open.level : report.level;
-  if (report.level === "ok") return "Recorded: ok. No alert sent. Say one short closing line.";
+  if (report.level === "ok") return `Recorded: ok. No alert sent. ${CLOSE}`;
 
   if (open && RANK[open.level] >= RANK[report.level]) {
     open.symptoms = report.symptoms;
-    return `Recorded: ${report.level}. The supervisor already has an open alert for this worker. Say one short closing line.`;
+    return `Recorded: ${report.level}. The supervisor already has an open alert for this worker. ${CLOSE}`;
   }
   if (open) close(open, "superseded");
 
@@ -76,13 +78,13 @@ export function escalate(w, report) {
 
   if (a.level === "warning") {
     sms(`SOL WARNING – ${w.name}: ${a.symptoms}. ${Where(w)}.${map} Sol told them to rest in shade. Reply OK ${replyName(w)} after you check on them.`);
-    return "Recorded: warning. The supervisor was sent a text and will check on them. Say one short closing line.";
+    return `Recorded: warning. The supervisor was sent a text and will check on them. ${CLOSE}`;
   }
 
   w.hold = true; // no more automatic calls until a human resolves it
   sms(`SOL EMERGENCY – ${w.name}: ${a.symptoms}. ${Where(w)}.${map} Call 911 if life-threatening. Reply OK ${replyName(w)} when safe.`);
   pageSupervisor(a, w);
-  return "Recorded: emergency. The supervisor is being called right now and is coming. Say one short closing line: help is coming, do not be alone, stay in the shade if you can.";
+  return `Recorded: emergency. The supervisor is being called right now and is coming. Tell them help is coming, not to be alone, and to stay in the shade if they can. ${CLOSE}`;
 }
 
 function close(a, state) {

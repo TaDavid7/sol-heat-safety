@@ -239,3 +239,16 @@ test("unregistered caller: emergency can be resolved by SMS", async () => {
   assert.match(await post("/twilio/sms", { From: "+15550000002", Body: "STATUS" }), /Unknown caller/);
   assert.match(await post("/twilio/sms", { From: "+15550000002", Body: "OK" }), /marked safe/);
 });
+
+test("operator-style narration is never read to the worker", async () => {
+  const w = world.findWorker("luis");
+  fresh(w);
+  const call = calls.place(w, "not_moving");
+  queue.push([say("Hola Luis.")]);
+  await calls.answer(call);
+  queue.push([report("emergency", "confused speech", "no")], [say("I flagged this as an emergency because the worker sounded confused.")]);
+  const r = await calls.hear(call, { text: "qué... dónde..." });
+  assert.doesNotMatch(r.say, /flagged/);
+  assert.match(r.say, /La ayuda viene/);
+  assert.ok(events.some((e) => e.type === "sol_meta_blocked"));
+});

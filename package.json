@@ -7,7 +7,8 @@
     "start": "node --env-file-if-exists=.env src/server.js",
     "dev": "node --watch --env-file-if-exists=.env src/server.js",
     "test": "node --test test/webhooks.test.js",
-    "test:eval": "node --env-file-if-exists=.env --test test/conversation.eval.js"
+    "test:eval": "node --env-file-if-exists=.env --test test/conversation.eval.js",
+    "demo:audio": "node --env-file-if-exists=.env demo/make-audio.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.3.0",
