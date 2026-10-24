@@ -13,6 +13,7 @@ const es = config.supervisorLanguage === "es";
 const firstName = (w) => w.name.split(" ")[0];
 const replyName = (w) => firstName(w).normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase();
 const where = (w) => (w.stub ? `unregistered caller ${w.phone || ""}`.trim() : describeLocation(w));
+const Where = (w) => where(w).replace(/^./, (c) => c.toUpperCase()); // sentence start
 
 async function deliver(kind, fn) {
   if (!twilio.enabled || !config.supervisorPhone) return; // terminal mode: the log line is the delivery
@@ -74,12 +75,12 @@ export function escalate(w, report) {
   const map = w.stub ? "" : ` ${mapsLink(w)}`;
 
   if (a.level === "warning") {
-    sms(`SOL WARNING – ${w.name}: ${a.symptoms}. ${where(w)}.${map} Sol told them to rest in shade. Reply OK ${replyName(w)} after you check on them.`);
+    sms(`SOL WARNING – ${w.name}: ${a.symptoms}. ${Where(w)}.${map} Sol told them to rest in shade. Reply OK ${replyName(w)} after you check on them.`);
     return "Recorded: warning. The supervisor was sent a text and will check on them. Say one short closing line.";
   }
 
   w.hold = true; // no more automatic calls until a human resolves it
-  sms(`SOL EMERGENCY – ${w.name}: ${a.symptoms}. ${where(w)}.${map} Call 911 if life-threatening. Reply OK ${replyName(w)} when safe.`);
+  sms(`SOL EMERGENCY – ${w.name}: ${a.symptoms}. ${Where(w)}.${map} Call 911 if life-threatening. Reply OK ${replyName(w)} when safe.`);
   pageSupervisor(a, w);
   return "Recorded: emergency. The supervisor is being called right now and is coming. Say one short closing line: help is coming, do not be alone, stay in the shade if you can.";
 }

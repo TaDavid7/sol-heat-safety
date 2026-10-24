@@ -31,7 +31,7 @@ export const REPORT_TOOL = {
     properties: {
       worker_id: { type: "string" },
       level: { type: "string", enum: ["ok", "warning", "emergency"] },
-      symptoms: { type: "string", description: "Symptoms or warning signs noticed, in English, comma-separated. 'none' if none." },
+      symptoms: { type: "string", description: "Symptoms or warning signs noticed: short English phrases, comma-separated, no pronouns (e.g. 'confused speech, disoriented'). 'none' if none." },
       took_break: { type: "string", enum: ["yes", "no"], description: "Whether they are taking (or agreed to take) a shade break." },
     },
   },
